@@ -1,0 +1,7 @@
+node_modules/
+.env
+cache/
+artifacts/
+coverage/
+frontend/dist/
+frontend/node_modules/

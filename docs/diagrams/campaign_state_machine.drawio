@@ -1,0 +1,79 @@
+<mxfile host="Electron">
+  <diagram id="campaign-state-machine" name="Діаграма станів кампанії">
+    <mxGraphModel dx="1704" dy="1013" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="600" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontFamily=Helvetica;" value="&lt;b&gt;ДІАГРАМА ПЕРЕХОДУ СТАНІВ КАМПАНІЇ (STATE MACHINE)&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#64748b&quot;&gt;Головний смарт-контракт Crowdfunding.sol • Життєвий цикл краудфандингового збору&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="700" x="320" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="start_node" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#0f172a;strokeColor=#0f172a;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="40" y="235" as="geometry" />
+        </mxCell>
+        <mxCell id="state_active" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#f0f9ff;strokeColor=#0284c7;strokeWidth=2;fontColor=#0369a1;fontFamily=Helvetica;align=center;" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;ACTIVE (АКТИВНА)&lt;/b&gt;&lt;hr style=&quot;border-color: #38bdf8;&quot;&gt;&lt;div style=&quot;text-align: left; font-size: 11px;&quot;&gt;• Триває прийом внесків ETH&lt;br&gt;• Дозволено &lt;b&gt;pledge()&lt;/b&gt;&lt;br&gt;• Емісія RewardToken (CRT)&lt;br&gt;• &lt;i&gt;block.timestamp &amp;lt; deadline&lt;/i&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="110" width="220" x="190" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_start_to_active" edge="1" parent="1" source="start_node" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;strokeColor=#0284c7;strokeWidth=2;fontFamily=Helvetica;" target="state_active" value="&lt;b&gt;createCampaign()&lt;/b&gt;&lt;br&gt;[Автор верифікований]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_pledge_loop" edge="1" parent="1" source="state_active" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;fontSize=11;fontColor=#0369a1;strokeColor=#0284c7;strokeWidth=1.5;fontFamily=Helvetica;" target="state_active" value="&lt;b&gt;pledge()&lt;/b&gt; [now &amp;lt; deadline &amp;amp;&amp;amp; !paused]&lt;br&gt;Нарахування токенів CRT вкладнику">
+          <mxGeometry relative="1" x="0.1" y="-20" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="245" y="125" />
+              <mxPoint x="355" y="125" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="state_successful" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;strokeWidth=2;fontColor=#15803d;fontFamily=Helvetica;align=center;" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;SUCCESSFUL (УСПІШНА)&lt;/b&gt;&lt;hr style=&quot;border-color: #22c55e;&quot;&gt;&lt;div style=&quot;text-align: left; font-size: 11px;&quot;&gt;• Ціль фінансування досягнуто&lt;br&gt;• &lt;b&gt;totalPledged &amp;gt;= goal&lt;/b&gt;&lt;br&gt;• &lt;i&gt;block.timestamp &amp;gt;= deadline&lt;/i&gt;&lt;br&gt;• Дозволено виведення коштів&lt;/div&gt;" vertex="1">
+          <mxGeometry height="110" width="230" x="540" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="state_failed" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fef2f2;strokeColor=#dc2626;strokeWidth=2;fontColor=#b91c1c;fontFamily=Helvetica;align=center;" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;FAILED (ПРОВАЛЕНА)&lt;/b&gt;&lt;hr style=&quot;border-color: #ef4444;&quot;&gt;&lt;div style=&quot;text-align: left; font-size: 11px;&quot;&gt;• Ціль не зібрано до дедлайну&lt;br&gt;• &lt;b&gt;totalPledged &amp;lt; goal&lt;/b&gt;&lt;br&gt;• &lt;i&gt;block.timestamp &amp;gt;= deadline&lt;/i&gt;&lt;br&gt;• Дозволено повернення внесків&lt;/div&gt;" vertex="1">
+          <mxGeometry height="110" width="230" x="540" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_to_successful" edge="1" parent="1" source="state_active" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;strokeColor=#16a34a;strokeWidth=2;fontColor=#15803d;fontFamily=Helvetica;" target="state_successful" value="&lt;b&gt;Дедлайн настав&lt;/b&gt;&lt;br&gt;[totalPledged &amp;gt;= goal]">
+          <mxGeometry relative="1" x="-0.15" y="-15" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="223" />
+              <mxPoint x="460" y="155" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_to_failed" edge="1" parent="1" source="state_active" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;strokeColor=#dc2626;strokeWidth=2;fontColor=#b91c1c;fontFamily=Helvetica;" target="state_failed" value="&lt;b&gt;Дедлайн настав&lt;/b&gt;&lt;br&gt;[totalPledged &amp;lt; goal]">
+          <mxGeometry relative="1" x="-0.15" y="15" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="278" />
+              <mxPoint x="460" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="state_claimed" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fffbeb;strokeColor=#d97706;strokeWidth=2;fontColor=#b45309;fontFamily=Helvetica;align=center;" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;CLAIMED (ВИПЛАЧЕНО)&lt;/b&gt;&lt;hr style=&quot;border-color: #d97706;&quot;&gt;&lt;div style=&quot;text-align: left; font-size: 11px;&quot;&gt;• Кошти перераховано автору&lt;br&gt;• Прапорець &lt;b&gt;claimed = true&lt;/b&gt;&lt;br&gt;• Повторне виведення заблоковано&lt;br&gt;• Кампанія успішно завершена&lt;/div&gt;" vertex="1">
+          <mxGeometry height="110" width="220" x="940" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="state_refunding" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#faf5ff;strokeColor=#9333ea;strokeWidth=2;fontColor=#7e22ce;fontFamily=Helvetica;align=center;" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;REFUNDING (ПОВЕРНЕННЯ)&lt;/b&gt;&lt;hr style=&quot;border-color: #9333ea;&quot;&gt;&lt;div style=&quot;text-align: left; font-size: 11px;&quot;&gt;• Вкладники забирають кошти&lt;br&gt;• Патерн &lt;b&gt;Pull over Push&lt;/b&gt;&lt;br&gt;• Обнулення балансу перед call (CEI)&lt;br&gt;• Кампанія закрита&lt;/div&gt;" vertex="1">
+          <mxGeometry height="110" width="220" x="940" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_claim" edge="1" parent="1" source="state_successful" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;strokeColor=#d97706;strokeWidth=2;fontColor=#b45309;fontFamily=Helvetica;" target="state_claimed" value="&lt;b&gt;claim(campaignId)&lt;/b&gt;&lt;br&gt;[msg.sender == author]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_refund" edge="1" parent="1" source="state_failed" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;strokeColor=#9333ea;strokeWidth=2;fontColor=#7e22ce;fontFamily=Helvetica;" target="state_refunding" value="&lt;b&gt;claimRefund(id)&lt;/b&gt;&lt;br&gt;[Кожен вкладник окремо]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="end_node_1" parent="1" style="ellipse;shape=doubleEllipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#15803d;strokeColor=#16a34a;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="1210" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_to_end_1" edge="1" parent="1" source="state_claimed" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#16a34a;strokeWidth=2;" target="end_node_1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="end_node_2" parent="1" style="ellipse;shape=doubleEllipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#7e22ce;strokeColor=#9333ea;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="1210" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_to_end_2" edge="1" parent="1" source="state_refunding" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#9333ea;strokeWidth=2;" target="end_node_2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

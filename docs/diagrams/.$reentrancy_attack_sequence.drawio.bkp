@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram id="seqlayout" name="Сценарій атаки Reentrancy та захист за патерном CEI">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1250" pageHeight="960" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Заголовок діаграми -->
+        <mxCell id="seq_title" value="&lt;b&gt;ДІАГРАМА ПОСЛІДОВНОСТІ: ВІДТВОРЕННЯ АТАКИ REENTRANCY ТА ЗАХИСТ CEI&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#64748b&quot;&gt;Checks-Effects-Interactions • Демонстрація відбиття повторного входу в Crowdfunding.sol&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="250" y="10" width="750" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Лінії життя учасників -->
+        <mxCell id="user" value="&lt;b&gt;Зловмисник&lt;/b&gt;&#xa;(Attacker Signer)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;size=40;participant=umlActor;verticalAlign=bottom;spacingBottom=-14;labelBackgroundColor=#ffffff;fillColor=#f8fafc;strokeColor=#475569;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="60" y="60" width="120" height="840" as="geometry"/>
+        </mxCell>
+        <mxCell id="atk" value="&lt;b&gt;Контракт-атакувальник&lt;/b&gt;&#xa;(Attacker.sol)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;size=40;fillColor=#fef2f2;strokeColor=#dc2626;fontColor=#991b1b;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="390" y="60" width="160" height="840" as="geometry"/>
+        </mxCell>
+        <mxCell id="cf" value="&lt;b&gt;Краудфандинг&lt;/b&gt;&#xa;(Crowdfunding.sol)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;size=40;fillColor=#f0fdf4;strokeColor=#16a34a;fontColor=#166534;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="740" y="60" width="160" height="840" as="geometry"/>
+        </mxCell>
+
+        <!-- Бари активації -->
+        <mxCell id="act0" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;outlineConnect=0;fillColor=#dcfce7;strokeColor=#16a34a;" vertex="1" parent="cf">
+          <mxGeometry x="75" y="140" width="10" height="560" as="geometry"/>
+        </mxCell>
+        <mxCell id="act1" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;outlineConnect=0;fillColor=#fee2e2;strokeColor=#dc2626;" vertex="1" parent="atk">
+          <mxGeometry x="75" y="90" width="10" height="660" as="geometry"/>
+        </mxCell>
+
+        <!-- Повідомлення -->
+        <mxCell id="m0" value="1. deposit(1) {value: 1 ETH}" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=0.5;exitY=0.1071;entryX=0;entryY=0.0;fontSize=11;fontFamily=Helvetica;strokeColor=#475569;" edge="1" parent="1" source="user" target="act1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="m1" value="2. pledge(1) {value: 1 ETH}" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=1;exitY=0.0758;entryX=0;entryY=0.0;fontSize=11;fontFamily=Helvetica;strokeColor=#0284c7;" edge="1" parent="1" source="act1" target="act0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Примітки праворуч від Crowdfunding -->
+        <mxCell id="note2" value="contributions[1][atk] = 1 ETH&#xa;Емітовано: 1 CRT токен винагороди" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#fffbeb;strokeColor=#d97706;fontColor=#78350f;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="930" y="210" width="280" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="note3" value="Дедлайн завершився. Кампанія провалена&#xa;(totalPledged &lt; goal, 3 ETH &lt; 10 ETH)" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#f8fafc;strokeColor=#64748b;fontColor=#334155;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="930" y="270" width="280" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m4" value="3. attack(1)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=0.5;exitY=0.369;entryX=0;entryY=0.3333;fontSize=11;fontFamily=Helvetica;strokeColor=#dc2626;" edge="1" parent="1" source="user" target="act1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="m5" value="4. claimRefund(1)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=1;exitY=0.4091;entryX=0;entryY=0.3929;fontSize=11;fontFamily=Helvetica;strokeColor=#dc2626;" edge="1" parent="1" source="act1" target="act0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="note6" value="[CHECKS]: deadline минув? Так. goal &lt; total? Так.&#xa;[EFFECTS (CEI)]: contributions[1][msg.sender] = 0 (ДО call!)" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#f0fdf4;strokeColor=#16a34a;fontColor=#166534;fontStyle=1;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="930" y="430" width="310" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m7" value="5. [INTERACTION] msg.sender.call{value: 1 ETH}(&quot;&quot;)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=0;exitY=0.5893;entryX=1;entryY=0.5758;fontSize=11;fontFamily=Helvetica;strokeColor=#16a34a;strokeWidth=1.5;" edge="1" parent="1" source="act0" target="act1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="m8" value="Хук receive() перехоплює ETH" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=1;exitY=0.6515;entryX=1;entryY=0.697;fontSize=11;fontFamily=Helvetica;strokeColor=#dc2626;" edge="1" parent="1" source="act1" target="act1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="500" y="560"/><mxPoint x="500" y="590"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="6. [REENTRANCY СПРОБА] claimRefund(1)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=1;exitY=0.7576;entryX=0;entryY=0.8036;fontSize=11;fontFamily=Helvetica;strokeColor=#dc2626;strokeWidth=1.5;" edge="1" parent="1" source="act1" target="act0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="note10" value="[CHECKS повторного входу]: contributions == 0!&#xa;Генерація revert NoContribution() — атака зірвана!" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#fef2f2;strokeColor=#dc2626;fontColor=#991b1b;fontStyle=1;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="930" y="660" width="310" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m11" value="7. REVERT: NoContribution() (відхилено via CEI)" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;curved=0;rounded=0;strokeColor=#dc2626;fontColor=#dc2626;strokeWidth=2;fontSize=11;fontFamily=Helvetica;exitX=0;exitY=1.0;entryX=1;entryY=0.9242;" edge="1" parent="1" source="act0" target="act1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="m12" value="8. Атака зазнала невдачі (кошти інших вкладників у безпеці!)" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;curved=0;rounded=0;strokeColor=#16a34a;fontColor=#166534;strokeWidth=2;fontSize=11;fontFamily=Helvetica;exitX=0;exitY=1.0;entryX=0.5;entryY=0.8929;" edge="1" parent="1" source="act1" target="user">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

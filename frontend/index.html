@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crowdfunding dApp (Автономний Web3 Інтерфейс)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --primary: #58a6ff;
+      --primary-hover: #1f6feb;
+      --success: #238636;
+      --success-hover: #2ea043;
+      --warning: #d29922;
+      --danger: #da3633;
+      --danger-hover: #b62324;
+      --badge-admin: #8957e5;
+      --badge-author: #238636;
+      --badge-contributor: #1f6feb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 25px;
+    }
+
+    h1 { font-size: 1.7rem; font-weight: 700; color: #fff; }
+    .subtitle { font-size: 0.85rem; color: var(--text-muted); }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #0d1117; border-color: var(--primary); }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover:not(:disabled) { background: var(--success-hover); }
+    .btn-warning { background: var(--warning); color: #0d1117; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
+    .btn-outline { background: transparent; border-color: var(--border); color: var(--text); }
+    .btn-outline:hover:not(:disabled) { border-color: var(--text-muted); background: #21262d; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-admin { background: rgba(137, 87, 229, 0.2); color: #d2a8ff; border: 1px solid #8957e5; }
+    .badge-author { background: rgba(35, 134, 54, 0.2); color: #7ee787; border: 1px solid #238636; }
+    .badge-contributor { background: rgba(31, 111, 235, 0.2); color: #79c0ff; border: 1px solid #1f6feb; }
+    .badge-paused { background: rgba(218, 54, 51, 0.2); color: #ff7b72; border: 1px solid #da3633; }
+    .badge-active { background: rgba(35, 134, 54, 0.2); color: #7ee787; border: 1px solid #238636; }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .form-group {
+      flex: 1;
+      min-width: 160px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 8px 12px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+    input:focus { outline: none; border-color: var(--primary); }
+
+    .network-alert {
+      background: rgba(210, 153, 34, 0.15);
+      border: 1px solid var(--warning);
+      color: #f2cc60;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      display: none;
+    }
+
+    .log-box {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .log-pending { color: #f2cc60; border-left: 4px solid var(--warning); }
+    .log-success { color: #7ee787; border-left: 4px solid var(--success); }
+    .log-error { color: #ff7b72; border-left: 4px solid var(--danger); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .campaign-card {
+      background: #161b22;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #21262d;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #58a6ff, #238636);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .campaign-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .campaign-meta code {
+      background: #0d1117;
+      padding: 2px 4px;
+      border-radius: 4px;
+      color: #c9d1d9;
+    }
+
+    .wallet-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: #161b22;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>⚡ Crowdfunding dApp Platform</h1>
+        <div class="subtitle">Ethers.js v6 • Hardhat Localhost (31337) / Sepolia (11155111) • Автономний вебінтерфейс</div>
+      </div>
+      <div id="walletSection" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <!-- Network Switcher Buttons -->
+        <div style="display: flex; gap: 6px; align-items: center; background: #161b22; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border);">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Мережа:</span>
+          <button id="btnSwitchLocalhost" class="btn btn-outline" style="font-size: 0.7rem; padding: 4px 8px;" onclick="switchNetwork('localhost')">🟢 Hardhat (31337)</button>
+          <button id="btnSwitchSepolia" class="btn btn-outline" style="font-size: 0.7rem; padding: 4px 8px;" onclick="switchNetwork('sepolia')">🔷 Sepolia (11155111)</button>
+        </div>
+
+        <button id="connectWalletBtn" class="btn btn-primary" onclick="connectWallet()">Підключити MetaMask</button>
+        <div id="walletInfo" class="wallet-status" style="display: none;">
+          <span id="networkBadge" class="badge" style="background: #238636;">Localhost</span>
+          <span id="accountAddress"></span>
+          <span id="accountBalance" style="color: var(--primary);"></span>
+          <span id="roleBadge" class="badge"></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Network Alert -->
+    <div id="networkAlert" class="network-alert" style="display: none;">
+      <span id="networkAlertText">⚠️ Непідтримувана мережа. Будь ласка, перемкніться на Hardhat (31337) або Sepolia (11155111).</span>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-warning" onclick="switchNetwork('localhost')">Hardhat (31337)</button>
+        <button class="btn btn-warning" onclick="switchNetwork('sepolia')">Sepolia (11155111)</button>
+      </div>
+    </div>
+
+    <!-- Status & Transaction Log -->
+    <div id="txLog" class="log-box"></div>
+
+    <!-- System Status Panel -->
+    <div class="card">
+      <div class="card-title">
+        <span>📊 Статус системи (<span id="currentNetworkName">Hardhat</span>)</span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-outline" style="font-size: 0.75rem;" onclick="toggleAddressConfig()">⚙️ Налаштувати адреси</button>
+          <button class="btn btn-outline" style="font-size: 0.75rem;" onclick="refreshAll()">🔄 Оновити</button>
+        </div>
+      </div>
+      <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem;">
+        <div>Контракт: <code id="contractAddrText" style="color: var(--primary);"></code></div>
+        <div>Стан: <span id="pauseStatusBadge" class="badge"></span></div>
+        <div>Токени винагороди (CRT): <strong id="tokenBalanceText" style="color: #d2a8ff;">0 CRT</strong></div>
+      </div>
+
+      <!-- Collapsible Contract Address Config -->
+      <div id="addressConfigPanel" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
+        <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #fff;">Адреси контрактів (зберігаються в браузері):</div>
+        <div class="form-row" style="margin-bottom: 8px;">
+          <div class="form-group" style="flex: 1;">
+            <label style="font-size: 0.75rem;">Crowdfunding:</label>
+            <input type="text" id="cfgCrowdfundingAddr" style="font-size: 0.8rem; font-family: monospace;">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label style="font-size: 0.75rem;">AuthorRegistry:</label>
+            <input type="text" id="cfgAuthorRegistryAddr" style="font-size: 0.8rem; font-family: monospace;">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label style="font-size: 0.75rem;">RewardToken:</label>
+            <input type="text" id="cfgRewardTokenAddr" style="font-size: 0.8rem; font-family: monospace;">
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-primary" style="font-size: 0.8rem;" onclick="saveCustomAddresses()">Зберегти адреси</button>
+          <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="resetDefaultAddresses()">Скинути за замовчуванням (Localhost)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="card" style="display: none;">
+      <div class="card-title">
+        <span>👑 Панель Адміністратора</span>
+        <button id="togglePauseBtn" class="btn btn-danger" onclick="togglePause()">Поставити на паузу</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex: 3;">
+          <label for="newAuthorAddr">Адреса для верифікації автора в AuthorRegistry:</label>
+          <input type="text" id="newAuthorAddr" placeholder="0x...">
+        </div>
+        <button class="btn btn-primary" onclick="addAuthor()">Додати перевіреного автора</button>
+      </div>
+    </div>
+
+    <!-- Author Panel -->
+    <div id="authorPanel" class="card" style="display: none;">
+      <div class="card-title">➕ Панель Автора: Створити кампанію</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="campaignGoal">Ціль збору (ETH):</label>
+          <input type="number" id="campaignGoal" step="0.1" value="5">
+        </div>
+        <div class="form-group">
+          <label for="campaignDuration">Тривалість (у секундах):</label>
+          <input type="number" id="campaignDuration" step="1" value="120">
+          <span style="font-size: 0.7rem; color: var(--text-muted);">120 сек = 2 хв для швидкого тестування</span>
+        </div>
+        <button class="btn btn-success" onclick="createCampaign()">Створити кампанію</button>
+      </div>
+    </div>
+
+    <!-- Campaigns List -->
+    <div class="card">
+      <div class="card-title">
+        <span>📋 Список краудфандингових кампаній (<span id="totalCampaignsCount">0</span>)</span>
+      </div>
+      <div id="campaignsContainer" class="grid">
+        <div style="color: var(--text-muted); font-size: 0.9rem;">Завантаження кампаній...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- ПІДТРИМУВАНІ МЕРЕЖІ ТА АДРЕСИ ---
+    const SUPPORTED_NETWORKS = {
+      31337n: {
+        name: "Hardhat Localhost",
+        hexId: "0x7a69",
+        rpc: "http://127.0.0.1:8545",
+        defaultAddresses: {
+          crowdfunding: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          authorRegistry: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          rewardToken: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+        }
+      },
+      11155111n: {
+        name: "Sepolia Testnet",
+        hexId: "0xaa36a7",
+        rpc: "https://ethereum-sepolia-rpc.publicnode.com",
+        defaultAddresses: {
+          crowdfunding: "0x8E64E7105A741432FcA98CC2e86dd75dd9b990A0",
+          authorRegistry: "0x41cf3dbca58668aB3dec9DFF2C688a5132f1e978",
+          rewardToken: "0xAFd4d67106c2AB5A5D2D6edbAA884b37275fC0B2"
+        }
+      }
+    };
+
+    let activeChainId = 31337n;
+    let CONTRACT_ADDRESSES = {
+      crowdfunding: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      authorRegistry: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      rewardToken: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+    };
+
+    function loadStoredAddresses(chainId) {
+      const stored = localStorage.getItem("crowdfunding_addrs_" + chainId);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.crowdfunding) return parsed;
+        } catch (e) {}
+      }
+      const net = SUPPORTED_NETWORKS[chainId];
+      return net ? { ...net.defaultAddresses } : { ...SUPPORTED_NETWORKS[31337n].defaultAddresses };
+    }
+
+    function toggleAddressConfig() {
+      const p = document.getElementById("addressConfigPanel");
+      p.style.display = p.style.display === "none" ? "block" : "none";
+      document.getElementById("cfgCrowdfundingAddr").value = CONTRACT_ADDRESSES.crowdfunding || "";
+      document.getElementById("cfgAuthorRegistryAddr").value = CONTRACT_ADDRESSES.authorRegistry || "";
+      document.getElementById("cfgRewardTokenAddr").value = CONTRACT_ADDRESSES.rewardToken || "";
+    }
+
+    function saveCustomAddresses() {
+      const cf = document.getElementById("cfgCrowdfundingAddr").value.trim();
+      const ar = document.getElementById("cfgAuthorRegistryAddr").value.trim();
+      const rt = document.getElementById("cfgRewardTokenAddr").value.trim();
+      if (!cf) {
+        alert("Введіть адресу контракту Crowdfunding!");
+        return;
+      }
+      CONTRACT_ADDRESSES = { crowdfunding: cf, authorRegistry: ar, rewardToken: rt };
+      localStorage.setItem("crowdfunding_addrs_" + activeChainId, JSON.stringify(CONTRACT_ADDRESSES));
+      document.getElementById("addressConfigPanel").style.display = "none";
+      showLog("Адреси контрактів успішно збережено в браузері!", "success");
+      reinstantiateContracts();
+      refreshAll();
+    }
+
+    function resetDefaultAddresses() {
+      localStorage.removeItem("crowdfunding_addrs_" + activeChainId);
+      CONTRACT_ADDRESSES = loadStoredAddresses(activeChainId);
+      document.getElementById("cfgCrowdfundingAddr").value = CONTRACT_ADDRESSES.crowdfunding || "";
+      document.getElementById("cfgAuthorRegistryAddr").value = CONTRACT_ADDRESSES.authorRegistry || "";
+      document.getElementById("cfgRewardTokenAddr").value = CONTRACT_ADDRESSES.rewardToken || "";
+      reinstantiateContracts();
+      refreshAll();
+      showLog("Скинуто на стандартні адреси.", "success");
+    }
+
+    function reinstantiateContracts() {
+      if (!CONTRACT_ADDRESSES.crowdfunding) return;
+      crowdfundingContract = new ethers.Contract(CONTRACT_ADDRESSES.crowdfunding, CROWDFUNDING_ABI, signer || provider);
+      if (CONTRACT_ADDRESSES.authorRegistry) {
+        authorRegistryContract = new ethers.Contract(CONTRACT_ADDRESSES.authorRegistry, AUTHOR_REGISTRY_ABI, signer || provider);
+      }
+      if (CONTRACT_ADDRESSES.rewardToken) {
+        rewardTokenContract = new ethers.Contract(CONTRACT_ADDRESSES.rewardToken, REWARD_TOKEN_ABI, signer || provider);
+      }
+      document.getElementById("contractAddrText").innerText = CONTRACT_ADDRESSES.crowdfunding;
+    }
+
+    const CROWDFUNDING_ABI = [
+      "function campaignCount() view returns (uint256)",
+      "function campaigns(uint256) view returns (address author, uint256 goal, uint256 deadline, uint256 totalPledged, bool claimed)",
+      "function contributions(uint256, address) view returns (uint256)",
+      "function paused() view returns (bool)",
+      "function owner() view returns (address)",
+      "function authorRegistry() view returns (address)",
+      "function rewardToken() view returns (address)",
+      "function createCampaign(uint256 goal, uint256 duration) returns (uint256)",
+      "function pledge(uint256 campaignId) payable",
+      "function claim(uint256 campaignId)",
+      "function claimRefund(uint256 campaignId)",
+      "function getCampaigns(uint256 offset, uint256 limit) view returns (tuple(address author, uint256 goal, uint256 deadline, uint256 totalPledged, bool claimed)[] result, uint256 total)",
+      "function pause()",
+      "function unpause()",
+      "event CampaignCreated(uint256 indexed campaignId, address indexed author, uint256 goal, uint256 deadline)",
+      "event Pledged(uint256 indexed campaignId, address indexed contributor, uint256 amount, uint256 rewardTokensMinted)",
+      "event Claimed(uint256 indexed campaignId, address indexed author, uint256 totalAmount)",
+      "event Refunded(uint256 indexed campaignId, address indexed contributor, uint256 amount)"
+    ];
+
+    const AUTHOR_REGISTRY_ABI = [
+      "function isVerified(address) view returns (bool)",
+      "function addAuthor(address)"
+    ];
+
+    const REWARD_TOKEN_ABI = [
+      "function balanceOf(address) view returns (uint256)"
+    ];
+
+    // Словник розшифровки кастомних помилок
+    const ERROR_MESSAGES = {
+      "NotVerifiedAuthor": "Ви не є верифікованим автором в AuthorRegistry",
+      "AuthorNotVerified": "Ви не є верифікованим автором в AuthorRegistry",
+      "AuthorAlreadyVerified": "Цей автор уже доданий до реєстру",
+      "ZeroGoal": "Ціль збору має бути строго більшою за 0 ETH",
+      "ZeroDuration": "Тривалість кампанії має бути більшою за 0 секунд",
+      "ZeroContribution": "Сума внеску має бути більшою за 0 ETH",
+      "CampaignEnded": "Термін дії кампанії вже завершився (дедлайн минув)",
+      "DeadlineNotPassed": "Дедлайн кампанії ще не настав",
+      "GoalNotReached": "Ціль кампанії не досягнута, виведення коштів автором неможливе",
+      "GoalAlreadyReached": "Ціль збору вже досягнута, кампанія успішна (повернення неможливе)",
+      "AlreadyClaimed": "Кошти цієї кампанії вже були виведені автором раніше",
+      "OnlyCampaignAuthor": "Тільки творець кампанії має право викликати виведення коштів",
+      "NoContribution": "У вас немає доступного внеску для повернення в цій кампанії",
+      "CampaignDoesNotExist": "Кампанія із зазначеним ID не існує",
+      "EnforcedPause": "Операцію відхилено: контракт знаходиться в режимі аварійної паузи (Emergency Stop)",
+      "OwnableUnauthorizedAccount": "Операція доступна тільки власнику платформи (Admin)"
+    };
+
+    let provider, signer, currentAccount = null;
+    let crowdfundingContract, authorRegistryContract, rewardTokenContract;
+    let isPaused = false;
+    let isAdmin = false;
+    let isAuthor = false;
+
+    // --- ПАРСИНГ ПОМИЛОК ---
+    function parseCustomError(error) {
+      if (!error) return "Невідома помилка";
+      const errString = error.message || error.toString();
+      for (const [errName, uaMsg] of Object.entries(ERROR_MESSAGES)) {
+        if (errString.includes(errName)) {
+          return `Помилка: ${uaMsg} (${errName})`;
+        }
+      }
+      if (error.reason) return `Помилка: ${error.reason}`;
+      if (error.shortMessage) return `Помилка: ${error.shortMessage}`;
+      return `Помилка транзакції: ${errString.slice(0, 150)}...`;
+    }
+
+    function showLog(message, type = "pending") {
+      const log = document.getElementById("txLog");
+      log.style.display = "block";
+      log.className = "log-box log-" + type;
+      log.innerHTML = message;
+    }
+
+    // --- ІНІЦІАЛІЗАЦІЯ ТА МЕРЕЖА ---
+    async function initEthers() {
+      if (window.ethereum) {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        window.ethereum.on("accountsChanged", handleAccountsChanged);
+        window.ethereum.on("chainChanged", () => window.location.reload());
+      } else {
+        provider = new ethers.JsonRpcProvider(SUPPORTED_NETWORKS[31337n].rpc);
+      }
+
+      await checkNetwork();
+      CONTRACT_ADDRESSES = loadStoredAddresses(activeChainId);
+      reinstantiateContracts();
+
+      // Підписка на події
+      setupEventListeners();
+
+      await checkInitialAccounts();
+      await refreshAll();
+    }
+
+    async function checkNetwork() {
+      if (!window.ethereum) return;
+      try {
+        const net = await provider.getNetwork();
+        activeChainId = net.chainId;
+        const alertBox = document.getElementById("networkAlert");
+        const netBadge = document.getElementById("networkBadge");
+        const netNameSpan = document.getElementById("currentNetworkName");
+
+        CONTRACT_ADDRESSES = loadStoredAddresses(activeChainId);
+        reinstantiateContracts();
+
+        const btnLocal = document.getElementById("btnSwitchLocalhost");
+        const btnSepolia = document.getElementById("btnSwitchSepolia");
+
+        if (SUPPORTED_NETWORKS[activeChainId]) {
+          alertBox.style.display = "none";
+          const info = SUPPORTED_NETWORKS[activeChainId];
+          if (netBadge) netBadge.innerText = info.name;
+          if (netNameSpan) netNameSpan.innerText = info.name;
+
+          if (btnLocal && btnSepolia) {
+            if (activeChainId === 31337n) {
+              btnLocal.style.background = "#238636";
+              btnLocal.style.color = "#fff";
+              btnSepolia.style.background = "transparent";
+              btnSepolia.style.color = "var(--text)";
+            } else if (activeChainId === 11155111n) {
+              btnSepolia.style.background = "#1f6feb";
+              btnSepolia.style.color = "#fff";
+              btnLocal.style.background = "transparent";
+              btnLocal.style.color = "var(--text)";
+            }
+          }
+        } else {
+          alertBox.style.display = "flex";
+          if (netBadge) netBadge.innerText = `ID: ${activeChainId}`;
+          if (netNameSpan) netNameSpan.innerText = "Непідтримувана мережа";
+          if (btnLocal && btnSepolia) {
+            btnLocal.style.background = "transparent";
+            btnSepolia.style.background = "transparent";
+          }
+        }
+      } catch (e) {
+        console.error("Помилка перевірки мережі:", e);
+      }
+    }
+
+    async function switchNetwork(target) {
+      if (!window.ethereum) return;
+      const targetChainId = target === "sepolia" ? "0xaa36a7" : "0x7a69";
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: targetChainId }]
+        });
+      } catch (err) {
+        if (err.code === 4902) {
+          if (target === "localhost") {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: "0x7a69",
+                chainName: "Hardhat Localhost",
+                rpcUrls: ["http://127.0.0.1:8545"],
+                nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }
+              }]
+            });
+          } else if (target === "sepolia") {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: "0xaa36a7",
+                chainName: "Sepolia Testnet",
+                rpcUrls: ["https://ethereum-sepolia-rpc.publicnode.com"],
+                nativeCurrency: { name: "SepoliaETH", symbol: "ETH", decimals: 18 },
+                blockExplorerUrls: ["https://sepolia.etherscan.io"]
+              }]
+            });
+          }
+        }
+      }
+    }
+
+    async function checkInitialAccounts() {
+      if (!window.ethereum) return;
+      try {
+        const accounts = await provider.send("eth_accounts", []);
+        if (accounts.length > 0) {
+          await setConnectedAccount(accounts[0]);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function connectWallet() {
+      if (!window.ethereum) {
+        alert("Встановіть MetaMask!");
+        return;
+      }
+      try {
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        await setConnectedAccount(accounts[0]);
+        await checkNetwork();
+      } catch (e) {
+        showLog(parseCustomError(e), "error");
+      }
+    }
+
+    async function handleAccountsChanged(accounts) {
+      if (accounts.length === 0) {
+        currentAccount = null;
+        document.getElementById("connectWalletBtn").style.display = "inline-flex";
+        document.getElementById("walletInfo").style.display = "none";
+        document.getElementById("adminPanel").style.display = "none";
+        document.getElementById("authorPanel").style.display = "none";
+      } else {
+        await setConnectedAccount(accounts[0]);
+      }
+      await refreshAll();
+    }
+
+    async function setConnectedAccount(addr) {
+      currentAccount = addr;
+      signer = await provider.getSigner();
+
+      // Підключаємо контракти до активного signer
+      reinstantiateContracts();
+
+      document.getElementById("connectWalletBtn").style.display = "none";
+      const info = document.getElementById("walletInfo");
+      info.style.display = "inline-flex";
+
+      document.getElementById("accountAddress").innerText = `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+
+      try {
+        const bal = await provider.getBalance(addr);
+        document.getElementById("accountBalance").innerText = `${parseFloat(ethers.formatEther(bal)).toFixed(3)} ETH`;
+      } catch (e) {
+        document.getElementById("accountBalance").innerText = `- ETH`;
+      }
+
+      // Перевірка ролей з захистом від помилок
+      isAdmin = false;
+      isAuthor = false;
+
+      try {
+        if (crowdfundingContract && CONTRACT_ADDRESSES.crowdfunding) {
+          const ownerAddr = await crowdfundingContract.owner();
+          isAdmin = addr.toLowerCase() === ownerAddr.toLowerCase();
+        }
+      } catch (err) {
+        console.warn("Помилка читання owner:", err);
+      }
+
+      try {
+        if (authorRegistryContract && CONTRACT_ADDRESSES.authorRegistry) {
+          isAuthor = await authorRegistryContract.isVerified(addr);
+        }
+      } catch (err) {
+        console.warn("Помилка перевірки автора:", err);
+      }
+
+      const roleBadge = document.getElementById("roleBadge");
+      const adminPanel = document.getElementById("adminPanel");
+      const authorPanel = document.getElementById("authorPanel");
+
+      if (isAdmin) {
+        roleBadge.className = "badge badge-admin";
+        roleBadge.innerText = "Admin";
+        adminPanel.style.display = "block";
+      } else if (isAuthor) {
+        roleBadge.className = "badge badge-author";
+        roleBadge.innerText = "Author";
+        adminPanel.style.display = "none";
+      } else {
+        roleBadge.className = "badge badge-contributor";
+        roleBadge.innerText = "Contributor";
+        adminPanel.style.display = "none";
+      }
+
+      authorPanel.style.display = isAuthor ? "block" : "none";
+
+      // Баланс токенів CRT
+      try {
+        if (rewardTokenContract && CONTRACT_ADDRESSES.rewardToken) {
+          const tokenBal = await rewardTokenContract.balanceOf(addr);
+          document.getElementById("tokenBalanceText").innerText = `${parseFloat(ethers.formatEther(tokenBal)).toFixed(2)} CRT`;
+        }
+      } catch (err) {
+        document.getElementById("tokenBalanceText").innerText = "0 CRT";
+      }
+    }
+
+    // --- ОНОВЛЕННЯ ДАНИХ ТА СПИСКУ КАМПАНІЙ ---
+    async function refreshAll() {
+      try {
+        isPaused = await crowdfundingContract.paused();
+        const pauseBadge = document.getElementById("pauseStatusBadge");
+        const toggleBtn = document.getElementById("togglePauseBtn");
+
+        if (isPaused) {
+          pauseBadge.className = "badge badge-paused";
+          pauseBadge.innerText = "Paused ⏸";
+          if (toggleBtn) toggleBtn.innerText = "Відновити (Unpause)";
+        } else {
+          pauseBadge.className = "badge badge-active";
+          pauseBadge.innerText = "Active ▶";
+          if (toggleBtn) toggleBtn.innerText = "Поставити на паузу (Pause)";
+        }
+
+        const count = await crowdfundingContract.campaignCount();
+        document.getElementById("totalCampaignsCount").innerText = count.toString();
+
+        if (Number(count) === 0) {
+          document.getElementById("campaignsContainer").innerHTML = '<div style="color: var(--text-muted);">Кампаній поки не створено.</div>';
+          return;
+        }
+
+        const [campaignList] = await crowdfundingContract.getCampaigns(0, 20);
+        renderCampaigns(campaignList);
+      } catch (e) {
+        console.error("Помилка оновлення:", e);
+      }
+    }
+
+    function renderCampaigns(list) {
+      const container = document.getElementById("campaignsContainer");
+      container.innerHTML = "";
+
+      const now = Math.floor(Date.now() / 1000);
+
+      list.forEach((c, idx) => {
+        const id = idx + 1;
+        const goal = ethers.formatEther(c.goal);
+        const pledged = ethers.formatEther(c.totalPledged);
+        const deadline = Number(c.deadline);
+        const isEnded = now >= deadline;
+        const isGoalMet = Number(c.totalPledged) >= Number(c.goal);
+        const isAuthorOfCampaign = currentAccount && c.author.toLowerCase() === currentAccount.toLowerCase();
+
+        let statusText = "Active";
+        let statusBadgeClass = "badge-active";
+
+        if (c.claimed) {
+          statusText = "Claimed";
+          statusBadgeClass = "badge-admin";
+        } else if (isEnded && isGoalMet) {
+          statusText = "Successful";
+          statusBadgeClass = "badge-author";
+        } else if (isEnded && !isGoalMet) {
+          statusText = "Failed";
+          statusBadgeClass = "badge-paused";
+        }
+
+        const percent = Math.min(100, (Number(pledged) / Number(goal)) * 100).toFixed(1);
+        const timeLeftSec = Math.max(0, deadline - now);
+        const timeLeftFormatted = timeLeftSec > 0 ? `${Math.floor(timeLeftSec / 60)}хв ${timeLeftSec % 60}с` : "Минув";
+
+        const card = document.createElement("div");
+        card.className = "campaign-card";
+        card.innerHTML = `
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <strong>Кампанія #${id}</strong>
+              <span class="badge ${statusBadgeClass}">${statusText}</span>
+            </div>
+            <div class="campaign-meta">
+              Автор: <code>${c.author.slice(0, 6)}...${c.author.slice(-4)}</code><br>
+              Часу залишилося: <strong>${timeLeftFormatted}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+              <span>Зібрано: <strong>${pledged} ETH</strong></span>
+              <span>Ціль: <strong>${goal} ETH</strong></span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${percent}%;"></div>
+            </div>
+          </div>
+          <div style="margin-top: 15px;">
+            ${!isEnded ? `
+              <div style="display: flex; gap: 6px;">
+                <input type="number" id="pledgeInput_${id}" placeholder="ETH" step="0.05" style="width: 80px;">
+                <button class="btn btn-primary" onclick="pledge(${id})" style="flex: 1;">Внести ETH</button>
+              </div>
+            ` : ""}
+
+            ${isEnded && isGoalMet && !c.claimed && isAuthorOfCampaign ? `
+              <button class="btn btn-success" style="width: 100%;" onclick="claim(${id})">💰 Забрати кошти (Claim)</button>
+            ` : ""}
+
+            ${isEnded && !isGoalMet ? `
+              <button class="btn btn-warning" style="width: 100%;" onclick="claimRefund(${id})">↩️ Повернути мій внесок (Refund)</button>
+            ` : ""}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- ОПЕРАЦІЇ З ТРАНЗАКЦІЯМИ ---
+    async function addAuthor() {
+      const addr = document.getElementById("newAuthorAddr").value.trim();
+      if (!addr || !ethers.isAddress(addr)) {
+        alert("Введіть коректну Ethereum-адресу!");
+        return;
+      }
+      try {
+        showLog("Надсилання транзакції додавання автора в AuthorRegistry...", "pending");
+        const regWithSigner = authorRegistryContract.connect(signer);
+        const tx = await regWithSigner.addAuthor(addr);
+        showLog(`Pending... Транзакцію відправлено: ${tx.hash}`, "pending");
+        const receipt = await tx.wait();
+        showLog(`Confirmed! Автора успішно додано у блоці #${receipt.blockNumber}`, "success");
+        document.getElementById("newAuthorAddr").value = "";
+      } catch (err) {
+        showLog(parseCustomError(err), "error");
+      }
+    }
+
+    async function togglePause() {
+      try {
+        const cfWithSigner = crowdfundingContract.connect(signer);
+        showLog("Перемикання статусу аварійної паузи...", "pending");
+        const tx = isPaused ? await cfWithSigner.unpause() : await cfWithSigner.pause();
+        showLog(`Pending... Транзакцію паузи відправлено: ${tx.hash}`, "pending");
+        const receipt = await tx.wait();
+        showLog(`Confirmed! Статус паузи оновлено у блоці #${receipt.blockNumber}`, "success");
+        await refreshAll();
+      } catch (err) {
+        showLog(parseCustomError(err), "error");
+      }
+    }
+
+    async function createCampaign() {
+      const goalEth = document.getElementById("campaignGoal").value;
+      const durationSec = document.getElementById("campaignDuration").value;
+      if (!goalEth || !durationSec) return;
+
+      try {
+        showLog("Створення кампанії...", "pending");
+        const cfWithSigner = crowdfundingContract.connect(signer);
+        const goalWei = ethers.parseEther(goalEth);
+        const tx = await cfWithSigner.createCampaign(goalWei, durationSec);
+        showLog(`Pending... Створення кампанії в мережі: ${tx.hash}`, "pending");
+        const receipt = await tx.wait();
+        showLog(`Confirmed! Кампанію створено у блоці #${receipt.blockNumber}`, "success");
+        await refreshAll();
+      } catch (err) {
+        showLog(parseCustomError(err), "error");
+      }
+    }
+
+    async function pledge(id) {
+      const input = document.getElementById(`pledgeInput_${id}`);
+      const val = input ? input.value : "";
+      if (!val || Number(val) <= 0) {
+        alert("Введіть суму ETH для внеску!");
+        return;
+      }
+
+      try {
+        showLog(`Внесення внеску в кампанію #${id}...`, "pending");
+        const cfWithSigner = crowdfundingContract.connect(signer);
+        const tx = await cfWithSigner.pledge(id, { value: ethers.parseEther(val) });
+        showLog(`Pending... Транзакція внеску: ${tx.hash}`, "pending");
+        const receipt = await tx.wait();
+        showLog(`Confirmed! Внесок підтверджено у блоці #${receipt.blockNumber}. Вам нараховано токени RewardToken!`, "success");
+        input.value = "";
+        await refreshAll();
+      } catch (err) {
+        showLog(parseCustomError(err), "error");
+      }
+    }
+
+    async function claim(id) {
+      try {
+        showLog(`Виведення коштів кампанії #${id} автором...`, "pending");
+        const cfWithSigner = crowdfundingContract.connect(signer);
+        const tx = await cfWithSigner.claim(id);
+        showLog(`Pending... Виведення коштів: ${tx.hash}`, "pending");
+        const receipt = await tx.wait();
+        showLog(`Confirmed! Кошти успішно зараховані автору у блоці #${receipt.blockNumber}`, "success");
+        await refreshAll();
+      } catch (err) {
+        showLog(parseCustomError(err), "error");
+      }
+    }
+
+    async function claimRefund(id) {
+      try {
+        showLog(`Повернення коштів за кампанією #${id}...`, "pending");
+        const cfWithSigner = crowdfundingContract.connect(signer);
+        const tx = await cfWithSigner.claimRefund(id);
+        showLog(`Pending... Повернення внеску: ${tx.hash}`, "pending");
+        const receipt = await tx.wait();
+        showLog(`Confirmed! Внесок успішно повернуто на ваш гаманець у блоці #${receipt.blockNumber}`, "success");
+        await refreshAll();
+      } catch (err) {
+        showLog(parseCustomError(err), "error");
+      }
+    }
+
+    // --- ПІДПИСКА НА ПОДІЇ КОНТРАКТУ (contract.on) ---
+    function setupEventListeners() {
+      try {
+        crowdfundingContract.on("CampaignCreated", (id, author, goal, deadline) => {
+          console.log("Event: CampaignCreated", id, author);
+          refreshAll();
+        });
+
+        crowdfundingContract.on("Pledged", (id, contributor, amount) => {
+          console.log("Event: Pledged", id, contributor, amount);
+          refreshAll();
+        });
+
+        crowdfundingContract.on("Claimed", (id, author, total) => {
+          console.log("Event: Claimed", id, author, total);
+          refreshAll();
+        });
+
+        crowdfundingContract.on("Refunded", (id, contributor, amount) => {
+          console.log("Event: Refunded", id, contributor, amount);
+          refreshAll();
+        });
+      } catch (e) {
+        console.warn("Підписка на події не підтримується поточним провайдером:", e);
+      }
+    }
+
+    // Запуск при завантаженні
+    window.addEventListener("load", initEthers);
+  </script>
+</body>
+</html>
